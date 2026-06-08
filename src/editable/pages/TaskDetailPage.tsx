@@ -7,7 +7,6 @@ import { buildPostUrl, fetchArticleComments, fetchTaskPostBySlug, fetchTaskPosts
 import { getTaskConfig, SITE_CONFIG, type TaskKey } from '@/lib/site-config'
 import type { SitePost } from '@/lib/site-connector'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
-import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
 
 export const revalidate = 3
 
@@ -105,8 +104,7 @@ const mapSrcFor = (post: SitePost) => {
 }
 
 export function TaskDetailView({ task, post, related, comments = [] }: { task: TaskKey; post: SitePost; related: SitePost[]; comments?: Array<{ id: string; name: string; comment: string; createdAt: string }> }) {
-  const preset = getVisualPreset(visualSystem.recommendedPreset as any)
-  const detailVars = { '--detail-bg': preset.colors.background, '--detail-text': preset.colors.foreground, '--detail-surface': preset.colors.surface, '--detail-accent': preset.colors.accent } as CSSProperties
+  const detailVars = { '--detail-bg': '#ffffff', '--detail-text': '#17104d', '--detail-surface': '#f4f8fc', '--detail-accent': '#ff2547', '--editable-border': '#e6e4ed' } as CSSProperties
 
   return (
     <EditableSiteShell>
@@ -126,7 +124,7 @@ export function TaskDetailView({ task, post, related, comments = [] }: { task: T
 function BackLink({ task }: { task: TaskKey }) {
   const taskConfig = getTaskConfig(task)
   return (
-    <Link href={taskConfig?.route || '/'} className="inline-flex items-center gap-2 rounded-full border border-[var(--editable-border)] bg-white/70 px-4 py-2 text-sm font-black">
+    <Link href={taskConfig?.route || '/'} className="inline-flex items-center gap-2 rounded-md border border-[var(--editable-border)] bg-white px-4 py-2 text-sm font-black text-[#17104d] shadow-sm">
       <ArrowLeft className="h-4 w-4" /> Back to {taskConfig?.label || 'posts'}
     </Link>
   )
@@ -223,20 +221,20 @@ function ClassifiedDetail({ post, related }: { post: SitePost; related: SitePost
 function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
   const images = getImages(post)
   return (
-    <section className="mx-auto max-w-[var(--editable-container)] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-      <BackLink task="image" />
-      <div className="mt-8 grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-        <aside className="rounded-[2.5rem] border border-[var(--editable-border)] bg-white p-7 lg:sticky lg:top-24 lg:self-start">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--detail-text)] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--detail-bg)]"><Camera className="h-4 w-4" /> Image story</div>
-          <h1 className="mt-6 text-4xl font-black leading-[0.98] tracking-[-0.07em] sm:text-5xl">{post.title}</h1>
-          <p className="mt-5 text-base leading-8 opacity-70">{summaryText(post)}</p>
+    <section className="mx-auto max-w-[1230px] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+      <div className="grid gap-8 lg:grid-cols-[390px_minmax(0,1fr)]">
+        <aside className="rounded-md border border-[var(--editable-border)] bg-white p-7 shadow-[0_12px_36px_rgba(23,16,77,0.08)] lg:sticky lg:top-24 lg:self-start">
+          <BackLink task="image" />
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#251857] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white"><Camera className="h-4 w-4" /> Image showcase</div>
+          <h1 className="mt-6 text-4xl font-bold leading-tight text-[#17104d] sm:text-5xl">{post.title}</h1>
+          <p className="mt-5 text-base leading-8 text-[#8e8aa8]">{summaryText(post)}</p>
           <BodyContent post={post} compact />
         </aside>
         <div className="columns-1 gap-5 space-y-5 md:columns-2">
           {(images.length ? images : ['/placeholder.svg?height=900&width=1200']).map((image, index) => (
-            <figure key={`${image}-${index}`} className="break-inside-avoid overflow-hidden rounded-[2rem] border border-[var(--editable-border)] bg-white shadow-sm">
+            <figure key={`${image}-${index}`} className="break-inside-avoid overflow-hidden rounded-md border border-[var(--editable-border)] bg-white shadow-[0_10px_30px_rgba(23,16,77,0.08)]">
               <img src={image} alt="" className="w-full object-cover" />
-              {index === 0 ? <figcaption className="p-5 text-sm font-bold opacity-65">Featured visual from this image post.</figcaption> : null}
+              {index === 0 ? <figcaption className="p-5 text-sm font-bold text-[#8e8aa8]">Featured visual from this image post.</figcaption> : null}
             </figure>
           ))}
         </div>
@@ -297,28 +295,99 @@ function ProfileDetail({ post, related }: { post: SitePost; related: SitePost[] 
   const role = getField(post, ['role', 'designation', 'company', 'location'])
   const website = getField(post, ['website', 'url'])
   const email = getField(post, ['email'])
+  const phone = getField(post, ['phone', 'telephone', 'mobile'])
+  const category = categoryOf(post, 'Profile')
+  const heroImage = images[0]
+  const gallery = images.length > 1 ? images.slice(1, 7) : images.slice(0, 6)
   return (
-    <section className="mx-auto grid max-w-[var(--editable-container)] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[420px_minmax(0,1fr)] lg:px-8 lg:py-16">
-      <aside className="rounded-[2.7rem] border border-[var(--editable-border)] bg-white p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.08)] lg:sticky lg:top-24 lg:self-start">
+    <section className="bg-white text-[#17104d]">
+      <div className="mx-auto max-w-[1230px] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <BackLink task="profile" />
-        <div className="mx-auto mt-10 flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-[var(--detail-bg)] ring-1 ring-[var(--editable-border)]">
-          {images[0] ? <img src={images[0]} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-16 w-16 opacity-45" />}
+
+        <div className="mt-8 overflow-hidden rounded-md border border-[#e6e4ed] bg-white shadow-[0_18px_52px_rgba(23,16,77,0.10)]">
+          <div className="relative grid min-h-[420px] gap-8 bg-[#251857] p-6 text-white sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-10">
+            <div className="pointer-events-none absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1.5px, transparent 1.5px)', backgroundSize: '13px 13px' }} />
+            <div className="relative z-10 flex flex-col justify-between">
+              <div>
+                <p className="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white/70">{category}</p>
+                <h1 className="mt-6 max-w-3xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">{post.title}</h1>
+                {role ? <p className="mt-5 text-sm font-black uppercase tracking-[0.16em] text-[#ff2547]">{role}</p> : null}
+              </div>
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-white/15 bg-white/8 p-4">
+                  <p className="text-2xl font-black text-[#ff2547]">{gallery.length || 1}</p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-white/60">Visuals</p>
+                </div>
+                <div className="rounded-md border border-white/15 bg-white/8 p-4">
+                  <p className="text-2xl font-black text-white">{related.length}</p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-white/60">Related</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10">
+              <div className="relative mx-auto max-w-[460px] rounded-md border border-white/15 bg-white p-5 text-[#17104d] shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
+                <div className="absolute -right-4 -top-4 rounded-md bg-[#ff2547] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white">Featured</div>
+                <div className="grid min-h-[300px] place-items-center rounded-md bg-[#f4f8fc] p-6">
+                  {heroImage ? <img src={heroImage} alt="" className="max-h-[270px] w-full object-contain" /> : <UserRound className="h-24 w-24 text-[#251857]" />}
+                </div>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {website ? <Link href={website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#251857] px-4 py-3 text-sm font-black text-white">Website <ExternalLink className="h-4 w-4" /></Link> : null}
+                  {email ? <a href={`mailto:${email}`} className="inline-flex items-center gap-2 rounded-md border border-[#e6e4ed] px-4 py-3 text-sm font-black text-[#251857]"><Mail className="h-4 w-4" /> Email</a> : null}
+                  {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-2 rounded-md border border-[#e6e4ed] px-4 py-3 text-sm font-black text-[#251857]"><Phone className="h-4 w-4" /> Call</a> : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_330px] lg:p-10">
+            <article className="min-w-0">
+              <div className="rounded-md border border-[#e6e4ed] bg-[#f4f8fc] p-6">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff2547]">Profile story</p>
+                <BodyContent post={post} />
+              </div>
+
+              {gallery.length ? (
+                <section className="mt-8">
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff2547]">Profile gallery</p>
+                      <h2 className="mt-2 text-3xl font-bold text-[#17104d]">Visual proof points</h2>
+                    </div>
+                  </div>
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {gallery.map((image, index) => (
+                      <figure key={`${image}-${index}`} className="overflow-hidden rounded-md border border-[#e6e4ed] bg-white shadow-[0_8px_26px_rgba(23,16,77,0.08)]">
+                        <div className="grid aspect-[4/3] place-items-center bg-[#f4f8fc] p-4">
+                          <img src={image} alt="" className="h-full w-full object-contain transition duration-500 hover:scale-105" />
+                        </div>
+                      </figure>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </article>
+
+            <aside className="space-y-5">
+              <div className="rounded-md border border-[#e6e4ed] bg-white p-5 shadow-[0_8px_26px_rgba(23,16,77,0.08)]">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#8e8aa8]">About this profile</p>
+                <div className="mt-4 grid gap-3 text-sm font-bold text-[#4f4b64]">
+                  <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4 text-[#ff2547]" /> Category: {category}</p>
+                  <p className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#ff2547]" /> Site: {SITE_CONFIG.name}</p>
+                 
+                </div>
+              </div>
+              <RelatedPanel task="profile" post={post} related={related} compact />
+            </aside>
+          </div>
         </div>
-        <h1 className="mt-6 text-4xl font-black leading-[0.98] tracking-[-0.07em]">{post.title}</h1>
-        {role ? <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--detail-accent)]">{role}</p> : null}
-        <ContactAction website={website} email={email} />
-      </aside>
-      <article className="rounded-[2.7rem] border border-[var(--editable-border)] bg-white p-7 shadow-sm sm:p-10">
-        <BodyContent post={post} />
-        <ImageStrip images={images.slice(1)} label="Profile gallery" />
-        <RelatedPanel task="profile" post={post} related={related} />
-      </article>
+      </div>
     </section>
   )
 }
 
 function BodyContent({ post, compact = false }: { post: SitePost; compact?: boolean }) {
-  return <div className={`article-content mt-8 max-w-none ${compact ? 'text-base leading-8' : 'text-lg leading-9'} opacity-80`} dangerouslySetInnerHTML={{ __html: formatPlainText(getBody(post)) }} />
+  return <div className={`article-content mt-8 max-w-none ${compact ? 'text-base leading-8' : 'text-lg leading-9'} text-[#4f4b64]`} dangerouslySetInnerHTML={{ __html: formatPlainText(getBody(post)) }} />
 }
 
 function InfoGrid({ items }: { items: Array<[string, string, typeof MapPin]> }) {
@@ -385,7 +454,7 @@ function RelatedPanel({ task, post, related, compact = false }: { task: TaskKey;
           <div className="mt-4 grid gap-3 text-sm font-bold opacity-75">
             <p className="inline-flex items-center gap-2"><Tag className="h-4 w-4" /> Task: {taskConfig?.label || task}</p>
             <p className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Site: {SITE_CONFIG.name}</p>
-            {post.publishedAt ? <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p> : null}
+            {task !== 'image' && post.publishedAt ? <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p> : null}
           </div>
         </div>
       ) : null}
