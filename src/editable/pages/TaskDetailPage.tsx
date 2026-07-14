@@ -68,31 +68,36 @@ const linkifyMarkdown = (value: string) => value
 const linkifyText = (value: string) => linkifyMarkdown(value)
   .replace(/(^|[\s(>])((https?:\/\/)[^\s<)]+)/gi, (_match, prefix, url) => `${prefix}<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${url}</a>`)
 
-const hardenLinks = (html: string) => html.replace(/<a\s+([^>]*href=["'][^"']+["'][^>]*)>/gi, (_match, attrs) => {
-  let next = String(attrs).replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-  if (!/\starget=/i.test(next)) next += ' target="_blank"'
-  if (!/\srel=/i.test(next)) next += ' rel="nofollow noopener noreferrer"'
-  return `<a ${next}>`
-})
-
-const sanitizeHtml = (html: string) => hardenLinks(html
-  .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-  .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-  .replace(/<(iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, '')
-  .replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-  .replace(/(href|src)=(['"])javascript:[\s\S]*?\2/gi, '$1="#"'))
+const stripHtml = (raw: string) => raw
+  .replace(/<(p|div|br|li|h[1-6])[^>]*>/gi, '\n')
+  .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/&quot;/gi, '"')
+  .replace(/&#0?39;/gi, '\'')
+  .replace(/[ \t]+/g, ' ')
+  .replace(/\n{3,}/g, '\n\n')
+  .trim()
 
 const formatPlainText = (raw: string) => {
-  const value = raw.trim()
+  const value = stripHtml(raw)
   if (!value) return ''
-  if (/<[a-z][\s\S]*>/i.test(value)) return sanitizeHtml(linkifyMarkdown(value))
   return value
     .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean)
     .map((part) => `<p>${linkifyText(escapeHtml(part).replace(/\n/g, '<br />'))}</p>`)
     .join('')
 }
 
-const summaryText = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || ''
+const summaryText = (post: SitePost) => stripHtml(post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || '')
+const summaryDistinctFromBody = (post: SitePost) => {
+  const summary = summaryText(post)
+  return summary && summary !== stripHtml(getBody(post)) ? summary : ''
+}
 const categoryOf = (post: SitePost, fallback: string) => asText(getContent(post).category) || post.tags?.[0] || fallback
 const mapSrcFor = (post: SitePost) => {
   const address = getField(post, ['address', 'location', 'city'])
@@ -167,7 +172,7 @@ function ListingDetail({ post, related }: { post: SitePost; related: SitePost[] 
             <div>
               <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--detail-accent)]">Business listing</p>
               <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.07em] sm:text-6xl">{post.title}</h1>
-              <p className="mt-5 max-w-3xl text-base leading-8 opacity-70">{summaryText(post)}</p>
+              {summaryDistinctFromBody(post) ? <p className="mt-5 max-w-3xl text-base leading-8 opacity-70">{summaryDistinctFromBody(post)}</p> : null}
             </div>
           </div>
           <InfoGrid items={[['Location', address, MapPin], ['Phone', phone, Phone], ['Email', email, Mail], ['Website', website, Globe2]]} />
@@ -227,7 +232,7 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
           <BackLink task="image" />
           <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#251857] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white"><Camera className="h-4 w-4" /> Image showcase</div>
           <h1 className="mt-6 text-4xl font-bold leading-tight text-[#17104d] sm:text-5xl">{post.title}</h1>
-          <p className="mt-5 text-base leading-8 text-[#8e8aa8]">{summaryText(post)}</p>
+          {summaryDistinctFromBody(post) ? <p className="mt-5 text-base leading-8 text-[#8e8aa8]">{summaryDistinctFromBody(post)}</p> : null}
           <BodyContent post={post} compact />
         </aside>
         <div className="columns-1 gap-5 space-y-5 md:columns-2">
@@ -252,7 +257,7 @@ function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[]
         <BackLink task="sbm" />
         <div className="mt-10 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-[var(--detail-text)] text-[var(--detail-bg)]"><Bookmark className="h-9 w-9" /></div>
         <h1 className="mt-7 text-4xl font-black leading-[0.98] tracking-[-0.07em] sm:text-6xl">{post.title}</h1>
-        <p className="mt-5 max-w-3xl text-lg leading-9 opacity-70">{summaryText(post)}</p>
+        {summaryDistinctFromBody(post) ? <p className="mt-5 max-w-3xl text-lg leading-9 opacity-70">{summaryDistinctFromBody(post)}</p> : null}
         {website ? <Link href={website} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--detail-text)] px-5 py-3 text-sm font-black text-[var(--detail-bg)]">Open saved resource <ExternalLink className="h-4 w-4" /></Link> : null}
         <BodyContent post={post} />
       </article>
