@@ -72,6 +72,10 @@ const linkifyText = (value: string) => linkifyMarkdown(value)
   .replace(/(^|[\s(>])((https?:\/\/)[^\s<)]+)/gi, (_match, prefix, url) => `${prefix}<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${url}</a>`)
 
 const stripHtml = (raw: string) => raw
+  .replace(/<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_match, url, label) => {
+    const text = label.replace(/<[^>]*>/g, '').trim() || url
+    return `[${text}](${url})`
+  })
   .replace(/<(p|div|br|li|h[1-6])[^>]*>/gi, '\n')
   .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
   .replace(/<[^>]*>/g, '')
